@@ -165,10 +165,41 @@ const deleteProduct = asyncHandler(async (req, res) => {
     }
 });
 
+
+const deleteMultipleProducts = asyncHandler(async (req, res) => {
+    try {
+        const { productIds } = req.body; 
+        const userId = req.user._id;         
+
+        if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+            return res.status(400).json({ code: 400, success: false, message: "Invalid product IDs" });
+        }
+
+        const products = await Product.find({ _id: { $in: productIds }, user: userId });
+
+        if (products.length !== productIds.length) {
+            return res.status(403).json({ code: 403, success: false, message: "Some products not found or unauthorized" });
+        }
+
+        await Product.deleteMany({ _id: { $in: productIds } });
+
+        res.status(200).json({ code: 200, success: true, message: "Products deleted successfully" });
+    } catch (error) {
+        res.status(500).json({
+            status: "error",
+            code: 500,
+            message: "Internal Server Error",
+            error: error.message
+        });
+    }
+});
+
+
 module.exports = {
     createProduct,
     getProducts,
     getProductById,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    deleteMultipleProducts
 };
